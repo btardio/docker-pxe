@@ -4,7 +4,9 @@ LABEL maintainer "ferrari.marco@gmail.com"
 
 # Install the necessary packages
 RUN apk add --no-cache \
+  tftp-hpa \
   dnsmasq \
+  libcap \
   wget
 
 ENV MEMTEST_VERSION 5.31b
@@ -36,5 +38,8 @@ COPY etc/ /etc
 
 # Start dnsmasq. It picks up default configuration from /etc/dnsmasq.conf and
 # /etc/default/dnsmasq plus any command line switch
-# ENTRYPOINT ["dnsmasq", "--no-daemon"]
-# CMD ["--dhcp-range=192.168.1.1,proxy"]
+
+RUN setcap cap_net_bind_service=+ep $(which dnsmasq)
+
+ENTRYPOINT ["dnsmasq", "--no-daemon"]
+CMD ["--dhcp-range=192.168.1.1,proxy"]
