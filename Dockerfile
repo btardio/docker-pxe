@@ -41,5 +41,9 @@ COPY etc/ /etc
 
 RUN setcap cap_net_bind_service=+ep $(which dnsmasq)
 
-ENTRYPOINT ["dnsmasq", "--no-daemon"]
-CMD ["--dhcp-range=192.168.1.1,proxy"]
+COPY entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+#ENTRYPOINT ["dnsmasq", "--no-daemon"]
+#CMD ["--dhcp-range=192.168.1.1,proxy"]
