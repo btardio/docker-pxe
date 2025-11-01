@@ -1,7 +1,5 @@
 FROM alpine:3.21.3
 
-LABEL maintainer "ferrari.marco@gmail.com"
-
 # Install the necessary packages
 RUN apk add --no-cache \
   tftp-hpa \
@@ -9,41 +7,22 @@ RUN apk add --no-cache \
   libcap \
   wget
 
-ENV MEMTEST_VERSION 5.31b
-ENV SYSLINUX_VERSION 6.03
-ENV TEMP_SYSLINUX_PATH /tmp/syslinux-"$SYSLINUX_VERSION"
-
 WORKDIR /tmp
-RUN \
-  mkdir -p "$TEMP_SYSLINUX_PATH" \
-  && wget -q https://www.kernel.org/pub/linux/utils/boot/syslinux/syslinux-"$SYSLINUX_VERSION".tar.gz \
-  && tar -xzf syslinux-"$SYSLINUX_VERSION".tar.gz \
-  && mkdir -p /var/lib/tftpboot \
-  && cp "$TEMP_SYSLINUX_PATH"/bios/core/pxelinux.0 /var/lib/tftpboot/ \
-  && cp "$TEMP_SYSLINUX_PATH"/bios/com32/libutil/libutil.c32 /var/lib/tftpboot/ \
-  && cp "$TEMP_SYSLINUX_PATH"/bios/com32/elflink/ldlinux/ldlinux.c32 /var/lib/tftpboot/ \
-  && cp "$TEMP_SYSLINUX_PATH"/bios/com32/menu/menu.c32 /var/lib/tftpboot/ \
-  && rm -rf "$TEMP_SYSLINUX_PATH" \
-  && rm /tmp/syslinux-"$SYSLINUX_VERSION".tar.gz \
-  && wget -q http://www.memtest.org/download/archives/"$MEMTEST_VERSION"/memtest86+-"$MEMTEST_VERSION".bin.gz \
-  && gzip -d memtest86+-"$MEMTEST_VERSION".bin.gz \
-  && mkdir -p /var/lib/tftpboot/memtest \
-  && mv memtest86+-$MEMTEST_VERSION.bin /var/lib/tftpboot/memtest/memtest86+
 
-# Configure PXE and TFTP
-COPY tftpboot/ /var/lib/tftpboot
+RUN mkdir -p /var/lib/tftpboot
+
+# Note: This isn't needed, it is using its bootcode.bin file
+# COPY bootcode.bin /
 
 # Configure DNSMASQ
-COPY etc/ /etc
+COPY etc/ /etc/
 
 # Start dnsmasq. It picks up default configuration from /etc/dnsmasq.conf and
-# /etc/default/dnsmasq plus any command line switch
 
 RUN setcap cap_net_bind_service=+ep $(which dnsmasq)
 
 COPY entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+# ENTRYPOINT ["/entrypoint.sh"]
 
-#ENTRYPOINT ["dnsmasq", "--no-daemon"]
 #CMD ["--dhcp-range=192.168.1.1,proxy"]
